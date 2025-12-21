@@ -38,7 +38,7 @@ function UserList() {
           const photos = await fetchModel(`/photo/photosOfUser/${userId}`);
           photoCountObj[userId] = Array.isArray(photos) ? photos.length : 0;
 
-          // Comment count (needs backend)
+          // Comment count
           const comments = await fetchModel(`/commentsOfUser/${userId}`);
           commentCountObj[userId] = Array.isArray(comments)
             ? comments.length

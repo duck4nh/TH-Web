@@ -79,6 +79,7 @@ function AppContent({ currentUser, onLoginSuccess, onLogout }) {
         {/* UserList chỉ hiển thị nếu có user login */}
         <Grid item sm={3}>
           <Paper className="main-grid-item">
+            {/* <UserList /> */}
             {currentUser ? (
               <UserList />
             ) : (
@@ -127,26 +128,28 @@ function AppContent({ currentUser, onLoginSuccess, onLogout }) {
                   </ProtectedRoute>
                 }
               />
-              <Route
+              {/* <Route
                 path="/users"
                 element={
                   <ProtectedRoute currentUser={currentUser}>
                     <UserList />
                   </ProtectedRoute>
                 }
-              />
+              /> */}
 
               <Route
                 path="/"
                 element={
                   currentUser ? (
                     <Navigate to={`/users/${currentUser._id}`} replace />
+                    // null
                   ) : (
-                    <Navigate to="/login" replace />
+                    // <Navigate to="/login" replace />
+                    null
                   )
                 }
               />
-              
+
               <Route path="*" element={<RedirectToLogin />} />
             </Routes>
           </Paper>

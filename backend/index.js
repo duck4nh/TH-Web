@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const path = require("path");
 const dbConnect = require("./db/dbConnect");
 const UserRouter = require("./routes/UserRouter");
 const PhotoRouter = require("./routes/PhotoRouter");
@@ -18,6 +19,9 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+
+app.use(express.static(path.join(__dirname, "public")));
+
 app.use("/api/user", UserRouter);
 app.use("/api/photo", PhotoRouter);
 app.use("/api", CommentRouter);
