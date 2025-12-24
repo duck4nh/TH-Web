@@ -5,7 +5,7 @@ const User = require("../db/userModel");
 const { requireAuth } = require("../middlewares/authMiddleware");
 const router = express.Router();
 
-router.get("/commentsOfUser/:id", requireAuth ,async (req, res) => {
+router.get("/commentsOfUser/:id", requireAuth, async (req, res) => {
   const userId = req.params.id;
 
   if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -97,9 +97,9 @@ router.post("/commentsOfPhoto/:photo_id", requireAuth, async (req, res) => {
       _id: newComment._id,
       comment: newComment.comment,
       date_time: newComment.date_time,
-      user:  {
+      user: {
         _id: user._id,
-        first_name:  user.first_name,
+        first_name: user.first_name,
         last_name: user.last_name,
       },
     };

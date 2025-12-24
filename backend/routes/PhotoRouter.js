@@ -24,7 +24,9 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     // Tạo filename duy nhất:  timestamp + random string + extension
     const ext = path.extname(file.originalname);
-    const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}${ext}`;
+    const uniqueName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}${ext}`;
     cb(null, uniqueName);
   },
 });
@@ -34,12 +36,7 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: function (req, file, cb) {
-    const allowedMimes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-    ];
+    const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
@@ -57,12 +54,9 @@ router.get("/photosOfUser/:id", requireAuth, async (req, res) => {
   }
 
   try {
-    const photos = await Photo.find(
-      { user_id: id },
-      "_id user_id file_name date_time comments"
-    )
-      .lean()
-      .exec();
+    const photos = await Photo.find({ user_id: id }).select(
+      "_id user_id file_name date_time comments likes"
+    );
 
     const commentUserIds = new Set();
     photos.forEach((p) => {
@@ -71,12 +65,9 @@ router.get("/photosOfUser/:id", requireAuth, async (req, res) => {
       });
     });
 
-    const users = await User.find(
-      { _id: { $in: Array.from(commentUserIds) } },
-      "_id first_name last_name"
-    )
-      .lean()
-      .exec();
+    const users = await User.find({
+      _id: { $in: Array.from(commentUserIds) },
+    }).select("_id first_name last_name");
 
     const usersMap = {};
     users.forEach((u) => {
@@ -90,9 +81,9 @@ router.get("/photosOfUser/:id", requireAuth, async (req, res) => {
     const APIPhotos = photos.map((p) => {
       const mappedComments = p.comments.map((c) => ({
         _id: c._id,
-        comment:  c.comment,
+        comment: c.comment,
         date_time: c.date_time,
-        user:  usersMap[String(c.user_id)] || null,
+        user: usersMap[String(c.user_id)] || null,
       }));
 
       return {
@@ -101,6 +92,7 @@ router.get("/photosOfUser/:id", requireAuth, async (req, res) => {
         file_name: p.file_name,
         date_time: p.date_time,
         comments: mappedComments,
+        likes: p.likes,
       };
     });
 
@@ -111,7 +103,7 @@ router.get("/photosOfUser/:id", requireAuth, async (req, res) => {
   }
 });
 
-// ✅ POST /new - Upload photo mới
+//  POST /new - Upload photo mới
 router.post("/new", requireAuth, upload.single("file"), async (req, res) => {
   try {
     // Kiểm tra file
@@ -130,6 +122,7 @@ router.post("/new", requireAuth, upload.single("file"), async (req, res) => {
       date_time: new Date(),
       user_id: new mongoose.Types.ObjectId(userId),
       comments: [],
+      likes: [],
     });
 
     // Lưu vào database
@@ -141,9 +134,9 @@ router.post("/new", requireAuth, upload.single("file"), async (req, res) => {
     res.status(201).json({
       _id: newPhoto._id,
       user_id: newPhoto.user_id,
-      file_name:  newPhoto.file_name,
+      file_name: newPhoto.file_name,
       date_time: newPhoto.date_time,
-      comments:  [],
+      comments: [],
     });
   } catch (err) {
     console.error("POST /photos/new error:", err);
@@ -152,6 +145,56 @@ router.post("/new", requireAuth, upload.single("file"), async (req, res) => {
       fs.unlinkSync(req.file.path);
     }
     res.status(500).json({ error: "Failed to upload photo" });
+  }
+});
+
+router.post("/likeOfPhoto/:photo_id", requireAuth, async (req, res) => {
+  const photoId = req.params.photo_id;
+  const userId = req.user.userId;
+
+  console.log("POST /likeOfPhoto/:photo_id called");
+
+  // Kiểm tra photo_id có hợp lệ không
+  if (!mongoose.Types.ObjectId.isValid(photoId)) {
+    console.log("Invalid photo id");
+    return res.status(400).json({ error: "Invalid photo id" });
+  }
+
+  try {
+    // Tìm photo
+    const photo = await Photo.findById(photoId);
+    if (!photo) {
+      console.log("Photo not found");
+      return res.status(404).json({ error: "Photo not found" });
+    }
+
+    // Tạo comment mới
+    const newLike = {
+      user_id: new mongoose.Types.ObjectId(userId),
+    };
+
+    photo.likes.push(newLike);
+    await photo.save();
+
+    console.log("Comment added successfully");
+
+    // Lấy user info để trả về client
+    const user = await User.findById(userId, "_id first_name last_name");
+
+    // Trả về comment vừa tạo
+    const response = {
+      message: "Like photo successfully",
+      user: {
+        _id: user._id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
+    };
+
+    res.status(201).json(response);
+  } catch (err) {
+    console.error("POST /commentsOfPhoto/:photo_id error:", err);
+    res.status(500).json({ error: "Failed to add comment" });
   }
 });
 

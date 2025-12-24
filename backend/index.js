@@ -13,7 +13,7 @@ dbConnect();
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "https://rqtnnj-3000.csb.app",
     credentials: true,
   })
 );
@@ -28,7 +28,7 @@ app.use("/api", CommentRouter);
 app.use("/api/admin", AdminRouter);
 
 app.get("/", (request, response) => {
-  response.send({ message: "Hello from photo-sharing app API!" });
+  response.send({ message: "Hello from photo-sharing app API! lmao" });
 });
 
 app.listen(8081, () => {

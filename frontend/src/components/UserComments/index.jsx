@@ -52,44 +52,61 @@ function UserComments() {
   if (comments.length === 0)
     return <Typography>No comments by this user.</Typography>;
 
+  const getImageSrc = (fileName) => {
+    // Kiểm tra nếu filename bắt đầu bằng số (ảnh upload mới từ backend)
+    if (/^\d/.test(fileName)) {
+      // Ảnh mới:  gọi từ backend
+      return `http://localhost:8081/images/${fileName}`;
+    } else {
+      // Ảnh cũ: gọi từ frontend
+      return `/images/${fileName}`;
+    }
+  };
+
   return (
     <Box sx={{ display: "grid", gap: 2 }}>
       <Typography variant="h4" sx={{ mb: 1 }}>
         Comments by {owner.first_name} {owner.last_name}
       </Typography>
 
-      {comments.map((c) => (
-        <Card key={c._id} sx={{ display: "flex", gap: 2, p: 2 }}>
-          <Link to={`/photos/${c.photo.user_id}#${c.photo._id}`}>
-            <CardMedia
-              component="img"
-              image={`/images/${c.photo.file_name}`}
-              alt={c.photo.file_name}
-              sx={{
-                width: 120,
-                height: 120,
-                borderRadius: 2,
-                objectFit: "cover",
-              }}
-            />
-          </Link>
+      {comments.map((c) => {
+        const imgSrc = getImageSrc(c.photo.file_name);
 
-          <CardContent sx={{ flexGrow: 1 }}>
-            <Typography variant="caption">{formatDate(c.date_time)}</Typography>
+        return (
+          <Card key={c._id} sx={{ display: "flex", gap: 2, p: 2 }}>
+            <Link to={`/photos/${c.photo.user_id}#${c.photo._id}`}>
+              <CardMedia
+                component="img"
+                image={imgSrc}
+                alt={c.photo.file_name}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 2,
+                  objectFit: "cover",
+                }}
+              />
+            </Link>
 
-            <Divider sx={{ my: 1 }} />
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="caption">
+                {formatDate(c.date_time)}
+              </Typography>
 
-            <Typography variant="body1">
-              <Link
-                to={`/photos/${c.photo._id}`}
-                style={{ textDecoration: "none" }}
-              >
-                {c.comment}
-              </Link>
-            </Typography>
-          </CardContent>
-        </Card>
-      ))}
+              <Divider sx={{ my: 1 }} />
+
+              <Typography variant="body1">
+                <Link
+                  to={`/photos/${c.photo.user_id}#${c.photo._id}`}
+                  style={{ textDecoration: "none" }}
+                >
+                  {c.comment}
+                </Link>
+              </Typography>
+            </CardContent>
+          </Card>
+        );
+      })}
     </Box>
   );
 }

@@ -8,10 +8,10 @@
  * @returns {Promise} Promise that resolves with parsed JSON data
  */
 function fetchModel(url, method = "GET", body = null) {
-  const baseUrl = "http://localhost:8081/api";
+  const baseUrl = "https://rqtnnj-8081.csb.app/api";
 
   const options = {
-    method:  method,
+    method: method,
     credentials: "include",
     headers: {
       Accept: "application/json",
@@ -34,7 +34,7 @@ function fetchModel(url, method = "GET", body = null) {
         throw new Error("Invalid JSON from server");
       }
 
-      if (!res. ok) {
+      if (!res.ok) {
         const msg = (data && data.error) || `${res.status} ${res.statusText}`;
         const err = new Error(msg);
         err.status = res.status;

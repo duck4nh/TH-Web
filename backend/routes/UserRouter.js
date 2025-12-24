@@ -50,7 +50,7 @@ router.post("/", async (req, res) => {
       password,
       first_name,
       last_name,
-      location:  location || "",
+      location: location || "",
       description: description || "",
       occupation: occupation || "",
     });
@@ -60,7 +60,7 @@ router.post("/", async (req, res) => {
     return res.status(201).json({
       _id: newUser._id,
       login_name: newUser.login_name,
-      first_name:  newUser.first_name,
+      first_name: newUser.first_name,
       last_name: newUser.last_name,
     });
   } catch (error) {

@@ -123,11 +123,14 @@ export default function TopBar({ currentUser, onLogout }) {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await fetch("http://localhost:8081/api/photo/new", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+      const response = await fetch(
+        "https://rqtnnj-8081.csb.app/api/photo/new",
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -160,7 +163,7 @@ export default function TopBar({ currentUser, onLogout }) {
 
   // Đóng dialog
   const handleCloseDialog = () => {
-    if (! uploading) {
+    if (!uploading) {
       setOpenDialog(false);
       setSelectedFile(null);
       setUploadError("");
@@ -181,14 +184,13 @@ export default function TopBar({ currentUser, onLogout }) {
           {currentUser ? (
             <>
               <Typography variant="subtitle1" color="inherit">
-                Hi {currentUser.first_name}
+                {rightText}
               </Typography>
 
-              {/* ✅ Nút Add Photo */}
+              {/*  Nút Add Photo */}
               <Button
                 variant="contained"
-                color="success"
-                startIcon={<CloudUploadIcon />}
+                // startIcon={<CloudUploadIcon />}
                 onClick={() => setOpenDialog(true)}
                 size="small"
                 sx={{
@@ -257,18 +259,16 @@ export default function TopBar({ currentUser, onLogout }) {
               p: 3,
               textAlign: "center",
               cursor: "pointer",
-              transition:  "all 0.3s",
-              backgroundColor: selectedFile ?"#e8f5e9" : "transparent",
-              borderColor: selectedFile ?"#4caf50" : "#ccc",
+              transition: "all 0.3s",
+              backgroundColor: selectedFile ? "#e8f5e9" : "transparent",
+              borderColor: selectedFile ? "#4caf50" : "#ccc",
               "&:hover": {
                 borderColor: "#4caf50",
                 backgroundColor: "#f1f8f6",
               },
             }}
           >
-            <CloudUploadIcon
-              sx={{ fontSize: 48, color: "#4caf50", mb: 1 }}
-            />
+            <CloudUploadIcon sx={{ fontSize: 48, color: "#4caf50", mb: 1 }} />
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
               Click to select or drag and drop
             </Typography>
@@ -278,7 +278,10 @@ export default function TopBar({ currentUser, onLogout }) {
 
             {selectedFile && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: "#4caf50" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, color: "#4caf50" }}
+                >
                   ✓ {selectedFile.name}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
@@ -307,9 +310,9 @@ export default function TopBar({ currentUser, onLogout }) {
             onClick={handleUpload}
             variant="contained"
             color="success"
-            disabled={! selectedFile || uploading}
+            disabled={!selectedFile || uploading}
           >
-            {uploading ?(
+            {uploading ? (
               <>
                 <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />
                 Uploading...

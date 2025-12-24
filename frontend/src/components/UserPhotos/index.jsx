@@ -19,7 +19,7 @@ function formatDate(dateString) {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    hour:  "2-digit",
+    hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
   };
@@ -32,14 +32,14 @@ function UserPhotos() {
   const [photos, setPhotos] = useState(null);
   const [owner, setOwner] = useState(undefined);
   const [error, setError] = useState(null);
-  
+
   const [commentText, setCommentText] = useState({});
   const [loadingCommentPhotoId, setLoadingCommentPhotoId] = useState(null);
   const [commentError, setCommentError] = useState({});
 
   useEffect(() => {
     let mounted = true;
-    if (! userId) {
+    if (!userId) {
       setOwner(null);
       setPhotos([]);
       return;
@@ -51,7 +51,7 @@ function UserPhotos() {
     ])
       .then(([photosData, userData]) => {
         if (!mounted) return;
-        setPhotos(Array.isArray(photosData) ?photosData : []);
+        setPhotos(Array.isArray(photosData) ? photosData : []);
         setOwner(userData || null);
       })
       .catch((err) => {
@@ -85,7 +85,7 @@ function UserPhotos() {
     }
 
     setLoadingCommentPhotoId(photoId);
-    setCommentError({ ...commentError, [photoId]:  "" });
+    setCommentError({ ...commentError, [photoId]: "" });
 
     try {
       const newComment = await fetchModel(
@@ -111,14 +111,14 @@ function UserPhotos() {
       console.error("Error adding comment:", err);
       setCommentError({
         ...commentError,
-        [photoId]:  err.message || "Failed to add comment",
+        [photoId]: err.message || "Failed to add comment",
       });
     } finally {
       setLoadingCommentPhotoId(null);
     }
   };
 
-  // ✅ HÀM TẠO IMAGE URL
+  //  HÀM TẠO IMAGE URL
   const getImageSrc = (fileName) => {
     // Kiểm tra nếu filename bắt đầu bằng số (ảnh upload mới từ backend)
     if (/^\d/.test(fileName)) {
@@ -135,13 +135,13 @@ function UserPhotos() {
     return <Typography variant="body1">Loading…</Typography>;
   if (owner === null)
     return <Typography variant="body1">User not found.</Typography>;
-  if (! photos || photos.length === 0)
+  if (!photos || photos.length === 0)
     return <Typography variant="body1">No photos for this user.</Typography>;
 
   return (
     <Box className="user-photos" sx={{ display: "grid", gap: 2 }}>
       {photos.map((p) => {
-        // ✅ Dùng hàm để xác định URL
+        // Dùng hàm để xác định URL
         const imgSrc = getImageSrc(p.file_name);
 
         return (
@@ -156,25 +156,24 @@ function UserPhotos() {
                   src={imgSrc}
                   alt={p.file_name}
                   style={{
-                    width: "100%",
-                    maxWidth: 720,
+                    width: "90%",
                     display: "block",
                     borderRadius: 8,
                   }}
                 />
               ) : (
                 <Typography variant="body2">
-                  Image not found:  {p.file_name}
+                  Image not found: {p.file_name}
                 </Typography>
               )}
 
               {/* Phần Comments */}
               <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" sx={{ mb:  2, fontWeight: 600 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
                   Comments ({p.comments ? p.comments.length : 0})
                 </Typography>
 
-                {! p.comments || p.comments.length === 0 ?(
+                {!p.comments || p.comments.length === 0 ? (
                   <Typography variant="body2" sx={{ mb: 2, opacity: 0.7 }}>
                     No comments yet. Be the first to comment!
                   </Typography>
@@ -194,7 +193,7 @@ function UserPhotos() {
                           style={{ textDecoration: "none", fontWeight: 600 }}
                         >
                           {c.user
-                            ?`${c.user.first_name} ${c.user.last_name}`
+                            ? `${c.user.first_name} ${c.user.last_name}`
                             : "Unknown"}
                         </RouterLink>
                         {":  "}
@@ -205,8 +204,11 @@ function UserPhotos() {
                 )}
 
                 {/* Form thêm comment */}
-                <Box sx={{ mt: 3, pt: 2, borderTop:  "1px solid #e0e0e0" }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+                <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ mb: 1.5, fontWeight: 600 }}
+                  >
                     Add a Comment
                   </Typography>
 
@@ -231,7 +233,7 @@ function UserPhotos() {
                   {commentError[p._id] && (
                     <Typography
                       variant="caption"
-                      sx={{ color:  "error.main", display: "block", mb: 1 }}
+                      sx={{ color: "error.main", display: "block", mb: 1 }}
                     >
                       {commentError[p._id]}
                     </Typography>
@@ -244,11 +246,11 @@ function UserPhotos() {
                     disabled={loadingCommentPhotoId === p._id}
                     sx={{ mt: 1 }}
                   >
-                    {loadingCommentPhotoId === p._id ?(
+                    {loadingCommentPhotoId === p._id ? (
                       <>
                         <CircularProgress
                           size={16}
-                          sx={{ mr:  1 }}
+                          sx={{ mr: 1 }}
                           color="inherit"
                         />
                         Posting...

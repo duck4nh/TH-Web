@@ -2,7 +2,12 @@ import "./App.css";
 
 import React, { useState, useEffect } from "react";
 import { Grid, Typography, Paper } from "@mui/material";
-import { BrowserRouter as Router, Route, Routes, Navigate} from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
 
 import TopBar from "./components/TopBar";
 import UserDetail from "./components/UserDetail";
@@ -11,7 +16,6 @@ import UserPhotos from "./components/UserPhotos";
 import UserComments from "./components/UserComments";
 import LoginRegister from "./components/LoginRegister";
 import fetchModel from "./lib/fetchModelData";
-
 
 function ProtectedRoute({ currentUser, children }) {
   return currentUser ? children : <Navigate to="/login" replace />;
@@ -29,6 +33,7 @@ const App = () => {
   useEffect(() => {
     fetchModel("/admin/whoami")
       .then((userData) => {
+        console.log(userData);
         setCurrentUser(userData);
       })
       .catch(() => {
@@ -49,7 +54,14 @@ const App = () => {
 
   if (isCheckingAuth) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
         <Typography variant="h6">Loading...</Typography>
       </div>
     );
@@ -65,7 +77,6 @@ const App = () => {
     </Router>
   );
 };
-
 
 function AppContent({ currentUser, onLoginSuccess, onLogout }) {
   return (
@@ -142,11 +153,9 @@ function AppContent({ currentUser, onLoginSuccess, onLogout }) {
                 element={
                   currentUser ? (
                     <Navigate to={`/users/${currentUser._id}`} replace />
-                    // null
-                  ) : (
-                    // <Navigate to="/login" replace />
-                    null
-                  )
+                  ) : // null
+                  // <Navigate to="/login" replace />
+                  null
                 }
               />
 
