@@ -12,9 +12,9 @@ const commentSchema = new mongoose.Schema({
   user_id: mongoose.Schema.Types.ObjectId,
 });
 
-// const likeSchema = new mongoose.Schema({
-//   user_id: mongoose.Schema.Types.ObjectId,
-// });
+const likeSchema = new mongoose.Schema({
+  user_id: mongoose.Schema.Types.ObjectId,
+});
 
 /**
  * Define the Mongoose Schema for a Photo.
@@ -28,7 +28,7 @@ const photoSchema = new mongoose.Schema({
   user_id: mongoose.Schema.Types.ObjectId,
   // Array of comment objects representing the comments made on this photo.
   comments: [commentSchema],
-  // likes: [likeSchema],
+  likes: [likeSchema],
 });
 
 /**

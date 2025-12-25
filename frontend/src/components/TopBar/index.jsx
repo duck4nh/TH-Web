@@ -12,13 +12,19 @@ import {
   DialogActions,
   Alert,
   CircularProgress,
+  TextField,
 } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import fetchModel from "../../lib/fetchModelData";
 import "./styles.css";
 
-export default function TopBar({ currentUser, onLogout }) {
+export default function TopBar({
+  currentUser,
+  onLogout,
+  searchText,
+  onSearchChange,
+}) {
   const location = useLocation();
   const path = location.pathname;
   const [rightText, setRightText] = useState("User List");
@@ -124,7 +130,7 @@ export default function TopBar({ currentUser, onLogout }) {
       formData.append("file", selectedFile);
 
       const response = await fetch(
-        "https://rqtnnj-8081.csb.app/api/photo/new",
+        "https://6h2l5v-8081.csb.app/api/photo/new",
         {
           method: "POST",
           credentials: "include",
@@ -183,6 +189,37 @@ export default function TopBar({ currentUser, onLogout }) {
           {/* Hiển thị "Hi <firstname>" hoặc "Please Login" */}
           {currentUser ? (
             <>
+              {/* <TextField
+                placeholder="Search users..."
+                value={searchText}
+                onChange={(e) => onSearchChange(e.target.value)}
+                sx={{
+                  width: 150,
+                  backgroundColor: "#fff",
+                  borderRadius: 1,
+                }}
+              /> */}
+              {/* <TextField
+                placeholder="Search comment..."
+                value={searchText}
+                onChange={(e) => onSearchChange(e.target.value)}
+                sx={{
+                  width: 150,
+                  backgroundColor: "#fff",
+                  borderRadius: 1,
+                }}
+              />
+              <Button
+                variant="contained"
+                onClick={() => navigate("/comment")}
+                size="small"
+                sx={{
+                  backgroundColor: "#4caf50",
+                  "&:hover": { backgroundColor: "#45a049" },
+                }}
+              >
+                Tìm
+              </Button> */}
               <Typography variant="subtitle1" color="inherit">
                 {rightText}
               </Typography>
@@ -200,6 +237,15 @@ export default function TopBar({ currentUser, onLogout }) {
               >
                 Add Photo
               </Button>
+
+              {/* <Button
+                variant="outlined"
+                color="inherit"
+                size="small"
+                onClick={() => navigate("/account")}
+              >
+                My Account
+              </Button> */}
 
               <Button
                 variant="outlined"
@@ -228,7 +274,7 @@ export default function TopBar({ currentUser, onLogout }) {
         </Box>
       </Toolbar>
 
-      {/* ✅ Dialog Upload Photo */}
+      {/*  Dialog Upload Photo */}
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}

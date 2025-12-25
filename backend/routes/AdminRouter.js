@@ -1,6 +1,8 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const User = require("../db/userModel");
+const { requireAuth } = require("../middlewares/authMiddleware");
 const { generateToken } = require("../middlewares/authMiddleware");
 
 router.post("/login", async (req, res) => {
@@ -72,14 +74,30 @@ router.get("/whoami", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    return res.status(200).json({
-      _id: user._id,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      login_name: user.login_name,
-    });
+    return res.status(200).json(user);
   } catch (error) {
     return res.status(401).json({ error: "Invalid token" });
+  }
+});
+
+router.put("/profile", requireAuth, async (req, res) => {
+  const { first_name, last_name, location, description, occupation } = req.body;
+  const userId = req.user.userId;
+  try {
+    const user = await User.findById(userId, { password: 0 });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    user.first_name = first_name;
+    user.last_name = last_name;
+    user.location = location;
+    user.description = description;
+    user.occupation = occupation;
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ error: "Failed to fetch user" });
   }
 });
 

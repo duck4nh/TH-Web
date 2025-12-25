@@ -1,301 +1,118 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
-  Box,
-  Card,
-  CardHeader,
-  CardContent,
   Typography,
-  TextField,
-  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Box,
   Divider,
-  CircularProgress,
 } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
 import fetchModel from "../../lib/fetchModelData";
-import "./styles.css";
 
-function LoginRegister({ onLoginSuccess }) {
-  const [loginName, setLoginName] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [loginLoading, setLoginLoading] = useState(false);
+function formatDate(d) {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(d));
+  } catch {
+    return d;
+  }
+}
 
-  const [regLoginName, setRegLoginName] = useState("");
-  const [regPassword, setRegPassword] = useState("");
-  const [regPassword2, setRegPassword2] = useState("");
-  const [regFirstName, setRegFirstName] = useState("");
-  const [regLastName, setRegLastName] = useState("");
-  const [regLocation, setRegLocation] = useState("");
-  const [regDescription, setRegDescription] = useState("");
-  const [regOccupation, setRegOccupation] = useState("");
-  const [regError, setRegError] = useState("");
-  const [regSuccess, setRegSuccess] = useState("");
-  const [regLoading, setRegLoading] = useState(false);
+function Test({ currentUser, searchText }) {
+  const userId = currentUser._id;
+  const [comments, setComments] = useState(null);
+  const [owner, setOwner] = useState(null);
 
-  // Handle login submit
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoginError("");
-    setLoginLoading(true);
+  useEffect(() => {
+    let mounted = true;
 
-    // Validate input
-    if (!loginName || !loginPassword) {
-      setLoginError("Please enter login name and password");
-      setLoginLoading(false);
-      return;
-    }
-    try {
-      // Gọi POST /admin/login với fetchModel
-      const userData = await fetchModel("/admin/login", "POST", {
-        login_name: loginName,
-        password: loginPassword,
-      });
-      onLoginSuccess(userData);
-    } catch (error) {
-      setLoginError(error.message || "Login failed.  Please try again.");
-    } finally {
-      setLoginLoading(false);
-    }
-  };
+    Promise.all([
+      fetchModel(`/commentsOfSearch/?keyword=${searchText}`),
+      fetchModel(`/user/${userId}`),
+    ]).then(([comments, userData]) => {
+      if (!mounted) return;
+      setComments(Array.isArray(comments) ? comments : []);
+      setOwner(userData || null);
+      console.log(comments);
+      console.log(owner);
+    });
 
-  // Handle registration submit
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setRegError("");
-    setRegSuccess("");
-    setRegLoading(true);
+    return () => {
+      mounted = false;
+    };
+  }, [userId, searchText]);
 
-    if (regPassword !== regPassword2) {
-      setRegError("Passwords do not match");
-      setRegLoading(false);
-      return;
-    }
+  if (!comments || !owner) return <Typography>Loading…</Typography>;
+  if (comments.length === 0)
+    return <Typography>No comments by this user.</Typography>;
 
-    if (!regLoginName || !regPassword || !regFirstName || !regLastName) {
-      setRegError("Please fill in all required fields (marked with *)");
-      setRegLoading(false);
-      return;
-    }
-
-    if (regPassword.trim() === "") {
-      setRegError("Password cannot be empty");
-      setRegLoading(false);
-      return;
-    }
-
-    try {
-      // Gọi POST /user với fetchModel
-      await fetchModel("/user", "POST", {
-        login_name: regLoginName,
-        password: regPassword,
-        first_name: regFirstName,
-        last_name: regLastName,
-        location: regLocation || "",
-        description: regDescription || "",
-        occupation: regOccupation || "",
-      });
-      setRegSuccess(
-        "Registration successful! You can now login with your credentials."
-      );
-      setRegLoginName("");
-      setRegPassword("");
-      setRegPassword2("");
-      setRegFirstName("");
-      setRegLastName("");
-      setRegLocation("");
-      setRegDescription("");
-      setRegOccupation("");
-    } catch (error) {
-      setRegError(error.message || "Registration failed. Please try again.");
-    } finally {
-      setRegLoading(false);
+  const filteredComments = comments.filter(
+    (c) => c.photo.user_id === currentUser._id
+  );
+  
+  const getImageSrc = (fileName) => {
+    // Kiểm tra nếu filename bắt đầu bằng số (ảnh upload mới từ backend)
+    if (/^\d/.test(fileName)) {
+      // Ảnh mới:  gọi từ backend
+      return `http://localhost:8081/images/${fileName}`;
+    } else {
+      // Ảnh cũ: gọi từ frontend
+      return `/images/${fileName}`;
     }
   };
 
   return (
-    <Box sx={{ display: "flex", gap: 3, flexDirection: "column", p: 2 }}>
-      {/* ==================== LOGIN SECTION ==================== */}
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography variant="h5" sx={{ mb: 2 }}>
-          Login
-        </Typography>
+    <Box sx={{ display: "grid", gap: 2 }}>
+      <Typography variant="h4" sx={{ mb: 1 }}>
+        Comments by "{searchText}""
+      </Typography>
 
-        {loginError && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            onClose={() => setLoginError("")}
-          >
-            {loginError}
-          </Alert>
-        )}
+      {comments.map((c) => {
+        const imgSrc = getImageSrc(c.photo.file_name);
 
-        <form onSubmit={handleLogin}>
-          <TextField
-            label="Login Name"
-            fullWidth
-            margin="normal"
-            value={loginName}
-            onChange={(e) => setLoginName(e.target.value)}
-            disabled={loginLoading}
-            required
-            autoComplete="username"
-          />
-          <TextField
-            label="Password"
-            type="password"
-            fullWidth
-            margin="normal"
-            value={loginPassword}
-            onChange={(e) => setLoginPassword(e.target.value)}
-            disabled={loginLoading}
-            required
-            autoComplete="current-password"
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ mt: 2 }}
-            disabled={loginLoading}
-          >
-            {loginLoading ? "Logging in..." : "Login"}
-          </Button>
-        </form>
-      </Paper>
+        return (
+          <Card key={c._id} sx={{ display: "flex", gap: 2, p: 2 }}>
+            <Link to={`/photos/${c.photo.user_id}#${c.photo._id}`}>
+              <CardMedia
+                component="img"
+                image={imgSrc}
+                alt={c.photo.file_name}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 2,
+                  objectFit: "cover",
+                }}
+              />
+            </Link>
 
-      <Divider />
-      {/* ==================== REGISTRATION SECTION ==================== */}
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography variant="h5" sx={{ mb: 2 }}>
-          Register New Account
-        </Typography>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="caption">
+                {formatDate(c.date_time)}
+              </Typography>
 
-        {regError && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            onClose={() => setRegError("")}
-          >
-            {regError}
-          </Alert>
-        )}
+              <Divider sx={{ my: 1 }} />
 
-        {regSuccess && (
-          <Alert
-            severity="success"
-            sx={{ mb: 2 }}
-            onClose={() => setRegSuccess("")}
-          >
-            {regSuccess}
-          </Alert>
-        )}
-
-        <form onSubmit={handleRegister}>
-          <TextField
-            label="Login Name *"
-            fullWidth
-            margin="normal"
-            value={regLoginName}
-            onChange={(e) => setRegLoginName(e.target.value)}
-            disabled={regLoading}
-            required
-            autoComplete="username"
-            helperText="Unique username for login"
-          />
-          <TextField
-            label="Password *"
-            type="password"
-            fullWidth
-            margin="normal"
-            value={regPassword}
-            onChange={(e) => setRegPassword(e.target.value)}
-            disabled={regLoading}
-            required
-            autoComplete="new-password"
-          />
-          <TextField
-            label="Confirm Password *"
-            type="password"
-            fullWidth
-            margin="normal"
-            value={regPassword2}
-            onChange={(e) => setRegPassword2(e.target.value)}
-            disabled={regLoading}
-            required
-            autoComplete="new-password"
-            error={regPassword2 !== "" && regPassword !== regPassword2}
-            helperText={
-              regPassword2 !== "" && regPassword !== regPassword2
-                ? "Passwords do not match"
-                : ""
-            }
-          />
-          <TextField
-            label="First Name *"
-            fullWidth
-            margin="normal"
-            value={regFirstName}
-            onChange={(e) => setRegFirstName(e.target.value)}
-            disabled={regLoading}
-            required
-            autoComplete="given-name"
-          />
-          <TextField
-            label="Last Name *"
-            fullWidth
-            margin="normal"
-            value={regLastName}
-            onChange={(e) => setRegLastName(e.target.value)}
-            disabled={regLoading}
-            required
-            autoComplete="family-name"
-          />
-          <TextField
-            label="Location"
-            fullWidth
-            margin="normal"
-            value={regLocation}
-            onChange={(e) => setRegLocation(e.target.value)}
-            disabled={regLoading}
-            autoComplete="address-level2"
-          />
-          <TextField
-            label="Description"
-            fullWidth
-            margin="normal"
-            multiline
-            rows={3}
-            value={regDescription}
-            onChange={(e) => setRegDescription(e.target.value)}
-            disabled={regLoading}
-            placeholder="Tell us about yourself..."
-          />
-          <TextField
-            label="Occupation"
-            fullWidth
-            margin="normal"
-            value={regOccupation}
-            onChange={(e) => setRegOccupation(e.target.value)}
-            disabled={regLoading}
-            autoComplete="organization-title"
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            color="secondary"
-            fullWidth
-            sx={{ mt: 2 }}
-            disabled={regLoading}
-          >
-            {regLoading ? "Registering..." : "Register Me"}
-          </Button>
-        </form>
-      </Paper>
+              <Typography variant="body1">
+                <Link
+                  to={`/photos/${c.photo.user_id}#${c.photo._id}`}
+                  style={{ textDecoration: "none" }}
+                >
+                  {c.comment}
+                </Link>
+              </Typography>
+            </CardContent>
+          </Card>
+        );
+      })}
     </Box>
   );
 }
 
-export default LoginRegister;
+export default Test;

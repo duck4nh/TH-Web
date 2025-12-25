@@ -26,16 +26,19 @@ function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString("en-US", options);
 }
 
-function UserPhotos() {
+function UserPhotos({ currentUser }) {
   const { userId } = useParams();
   const location = useLocation();
   const [photos, setPhotos] = useState(null);
+  const [like, setLike] = useState(null);
   const [owner, setOwner] = useState(undefined);
   const [error, setError] = useState(null);
 
   const [commentText, setCommentText] = useState({});
   const [loadingCommentPhotoId, setLoadingCommentPhotoId] = useState(null);
   const [commentError, setCommentError] = useState({});
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editCommentText, setEditCommentText] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -62,7 +65,7 @@ function UserPhotos() {
     return () => {
       mounted = false;
     };
-  }, [userId]);
+  }, [userId, like]);
 
   useEffect(() => {
     if (location.hash) {
@@ -118,6 +121,85 @@ function UserPhotos() {
     }
   };
 
+  const handleAddLike = async (photoId, liked) => {
+    try {
+      if (!liked) {
+        const response = await fetchModel(
+          `/photo/likeOfPhoto/${photoId}/like`,
+          "POST"
+        );
+        setLike(1);
+        console.log(like);
+      } else {
+        const response = await fetch(
+          `https://6h2l5v-8081.csb.app/api/photo/likeOfPhoto/${photoId}/like`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to unlike photo");
+        }
+        setLike(0);
+        console.log(like);
+      }
+    } catch (err) {
+      console.error("Like/Unlike error:", err);
+    }
+  };
+
+  const handleUpdateComment = async (photoId, commentId) => {
+    try {
+      const updated = await fetchModel(
+        `/comments/${commentId}`,
+        "PUT",
+        { comment: editCommentText }
+      );
+  
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p._id === photoId
+            ? {
+                ...p,
+                comments: p.comments.map((c) =>
+                  c._id === commentId
+                    ? { ...c, comment: updated.comment.comment, date_time: updated.comment.date_time }
+                    : c
+                ),
+              }
+            : p
+        )
+      );
+  
+      setEditingCommentId(null);
+      setEditCommentText("");
+    } catch (err) {
+      console.error("Update comment error:", err);
+    }
+  };
+
+  const handleDeleteComment = async (photoId, commentId) => {
+    try {
+      await fetchModel(`/comments/${commentId}`, "DELETE");
+  
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p._id === photoId
+            ? {
+                ...p,
+                comments: p.comments.filter((c) => c._id !== commentId),
+              }
+            : p
+        )
+      );
+    } catch (err) {
+      console.error("Delete comment error:", err);
+    }
+  };
+  
+  
   //  HÀM TẠO IMAGE URL
   const getImageSrc = (fileName) => {
     // Kiểm tra nếu filename bắt đầu bằng số (ảnh upload mới từ backend)
@@ -129,6 +211,9 @@ function UserPhotos() {
       return `/images/${fileName}`;
     }
   };
+  
+  const isMyComment = (commentUserId) =>
+    String(commentUserId) === String(currentUser._id);
 
   if (error) return <Typography variant="body1">Error: {error}</Typography>;
   if (owner === undefined || photos === null)
@@ -143,6 +228,9 @@ function UserPhotos() {
       {photos.map((p) => {
         // Dùng hàm để xác định URL
         const imgSrc = getImageSrc(p.file_name);
+        const liked = p.likes?.some(
+          (l) => String(l.user_id) === String(currentUser._id)
+        );
 
         return (
           <Card key={String(p._id)} id={p._id} elevation={1}>
@@ -166,6 +254,27 @@ function UserPhotos() {
                   Image not found: {p.file_name}
                 </Typography>
               )}
+              {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Button
+                  variant={liked ? "contained" : "outlined"}
+                  color={liked ? "error" : "primary"}
+                  size="small"
+                  onClick={() => handleAddLike(p._id, liked)}
+                  sx={{ mt: 1 }}
+                >
+                  {liked ? "Like" : "Like"}
+                </Button>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  {p.likes?.length} likes
+                </Typography>
+              </Box> */}
 
               {/* Phần Comments */}
               <Box sx={{ mt: 3 }}>
@@ -178,29 +287,96 @@ function UserPhotos() {
                     No comments yet. Be the first to comment!
                   </Typography>
                 ) : (
-                  p.comments.map((c) => (
-                    <Box key={String(c._id)} sx={{ mb: 2 }}>
-                      <Divider sx={{ mb: 1 }} />
-                      <Typography
-                        variant="caption"
-                        sx={{ display: "block", opacity: 0.7, mb: 0.5 }}
-                      >
-                        {formatDate(c.date_time)}
-                      </Typography>
-                      <Typography variant="body2">
-                        <RouterLink
-                          to={`/users/${c.user?._id}`}
-                          style={{ textDecoration: "none", fontWeight: 600 }}
+                  p.comments.map((c) => {
+                    const mine = isMyComment(c.user?._id);
+                    const isEditing = editingCommentId === c._id;
+
+                    return (
+                      <Box key={c._id} sx={{ mb: 2 }}>
+                        <Divider sx={{ mb: 1 }} />
+
+                        <Typography variant="caption" sx={{ opacity: 0.7 }}>
+                          {formatDate(c.date_time)}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 1,
+                          }}
                         >
-                          {c.user
-                            ? `${c.user.first_name} ${c.user.last_name}`
-                            : "Unknown"}
-                        </RouterLink>
-                        {":  "}
-                        {c.comment}
-                      </Typography>
-                    </Box>
-                  ))
+                        {isEditing ? (
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={editCommentText}
+                            onChange={(e) => setEditCommentText(e.target.value)}
+                            sx={{ mt: 1 }}
+                          />
+                        ) : (
+                          <Typography variant="body2" sx={{ mt: 0.5 }}>
+                            <RouterLink
+                              to={`/users/${c.user?._id}`}
+                              style={{ fontWeight: 600, textDecoration: "none" }}
+                            >
+                              {c.user
+                                ? `${c.user.first_name} ${c.user.last_name}`
+                                : "Unknown"}
+                            </RouterLink>
+                            {": "}
+                            {c.comment}
+                          </Typography>
+                        )}
+
+                        {mine && (
+                          <Box sx={{ mt: 0.5, display: "flex", gap: 1 }}>
+                            {isEditing ? (
+                              <>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={() => handleUpdateComment(p._id, c._id)}
+                                >
+                                  Save
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={() => setEditingCommentId(null)}
+                                >
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={() => {
+                                    setEditingCommentId(c._id);
+                                    setEditCommentText(c.comment);
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="error"
+                                  onClick={() => handleDeleteComment(p._id, c._id)}
+                                >
+                                  Delete
+                                </Button>
+                              </>
+                            )};
+                          </Box>
+                          
+                        )}
+                        </Box>
+                      </Box>
+                    );
+                  })
                 )}
 
                 {/* Form thêm comment */}

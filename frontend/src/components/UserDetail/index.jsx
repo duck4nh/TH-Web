@@ -4,10 +4,14 @@ import { Link as RouterLink, useParams } from "react-router-dom";
 import fetchModel from "../../lib/fetchModelData";
 import "./styles.css";
 
-function UserDetail() {
+function UserDetail({currentUser}) {
   const { userId } = useParams();
   const [user, setUser] = useState(undefined);
   const [error, setError] = useState(null);
+
+  const [friendList, setFriendList] = useState([]);
+  const isMe = currentUser?._id === userId;
+  const isFriend = friendList.includes(userId);
 
   useEffect(() => {
     let mounted = true;
@@ -30,6 +34,27 @@ function UserDetail() {
       mounted = false;
     };
   }, [userId]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    fetchModel("/friend/list")
+      .then((list) => {
+        // convert ObjectId -> string cho chắc
+        setFriendList((list || []).map(String));
+      })
+      .catch(console.error);
+  }, [currentUser]);
+
+  const handleAddFriend = async () => {
+    await fetchModel(`/friend/add/${userId}`, "POST");
+    setFriendList((prev) => [...prev, userId]);
+  };
+
+  const handleRemoveFriend = async () => {
+    await fetchModel(`/friend/remove/${userId}`, "DELETE");
+    setFriendList((prev) => prev.filter((id) => id !== userId));
+  };
 
   if (error) return <Typography variant="body1">Error: {error}</Typography>;
   if (user === undefined)
@@ -66,6 +91,29 @@ function UserDetail() {
       >
         View photos
       </Button>
+      {/* {!isMe && currentUser && (
+          isFriend ? (
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={handleRemoveFriend}
+              sx={{ width: "fit-content", mt: 1, ml: 1 }}
+            >
+              Hủy kết bạn
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={handleAddFriend}
+              sx={{ width: "fit-content", mt: 1, ml : 1 }}
+            >
+              Kết bạn
+            </Button>
+          )
+        )} */}
     </>
   );
 }

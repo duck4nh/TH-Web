@@ -8,7 +8,7 @@
  * @returns {Promise} Promise that resolves with parsed JSON data
  */
 function fetchModel(url, method = "GET", body = null) {
-  const baseUrl = "https://rqtnnj-8081.csb.app/api";
+  const baseUrl = "https://6h2l5v-8081.csb.app/api";
 
   const options = {
     method: method,

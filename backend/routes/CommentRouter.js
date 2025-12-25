@@ -111,4 +111,100 @@ router.post("/commentsOfPhoto/:photo_id", requireAuth, async (req, res) => {
   }
 });
 
+router.get("/commentsOfSearch", requireAuth, async (req, res) => {
+  const { keyword } = req.query;
+
+  try {
+    const regex = keyword ? new RegExp(keyword, "i") : null;
+
+    const photos = await Photo.find(
+      regex ? { "comments.comment": regex } : { comments: { $exists: true, $ne: [] } }
+    );
+
+    const result = [];
+
+    for (const photo of photos) {
+      for (const c of photo.comments || []) {
+        if (!regex || regex.test(c.comment)) {
+          result.push({
+            comment: c.comment,
+            date_time: c.date_time,
+            photo: {
+              _id: photo._id,
+              file_name: photo.file_name,
+              user_id: photo.user_id
+            }
+          });
+        }
+      }
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/comments/:comment_id", requireAuth, async (req, res) => {
+  const { comment_id } = req.params;
+  const { comment } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(comment_id)) {
+    return res.status(400).json({ error: "Invalid comment id" });
+  }
+
+  try {
+    const photo = await Photo.findOne({
+      "comments._id": comment_id,
+    });
+
+    const targetComment = photo.comments.id(comment_id);
+    targetComment.comment = comment.trim();
+    targetComment.date_time = new Date();
+
+    await photo.save();
+
+    res.json({
+      success: true,
+      comment: {
+        _id: targetComment._id,
+        comment: targetComment.comment,
+        date_time: targetComment.date_time,
+      },
+    });
+  } catch (err) {
+    console.error("PUT /comments/:comment_id error:", err);
+    res.status(500).json({ error: "Failed to update comment" });
+  }
+});
+
+router.delete("/comments/:comment_id", requireAuth, async (req, res) => {
+  const { comment_id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(comment_id)) {
+    return res.status(400).json({ error: "Invalid comment id" });
+  }
+
+  try {
+    const photo = await Photo.findOne({
+      "comments._id": comment_id,
+    });
+
+    photo.comments = photo.comments.filter(
+      (c) => String(c._id) !== String(comment_id)
+    );
+
+    await photo.save();
+
+    res.json({
+      success: true,
+      comment_id,
+    });
+  } catch (err) {
+    console.error("DELETE /comments/:comment_id error:", err);
+    res.status(500).json({ error: "Failed to delete comment" });
+  }
+});
+
 module.exports = router;

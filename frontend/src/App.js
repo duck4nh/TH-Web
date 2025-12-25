@@ -15,6 +15,8 @@ import UserList from "./components/UserList";
 import UserPhotos from "./components/UserPhotos";
 import UserComments from "./components/UserComments";
 import LoginRegister from "./components/LoginRegister";
+import Profile from "./components/Profile";
+import Test from "./components/Test";
 import fetchModel from "./lib/fetchModelData";
 
 function ProtectedRoute({ currentUser, children }) {
@@ -28,6 +30,7 @@ function RedirectToLogin() {
 const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [searchText, setSearchText] = useState("");
 
   //Check nếu user đã login khi app load
   useEffect(() => {
@@ -73,17 +76,25 @@ const App = () => {
         currentUser={currentUser}
         onLoginSuccess={handleLoginSuccess}
         onLogout={handleLogout}
+        searchText={searchText}
+        setSearchText={setSearchText}
       />
     </Router>
   );
 };
 
-function AppContent({ currentUser, onLoginSuccess, onLogout }) {
+function AppContent({
+  currentUser,
+  onLoginSuccess,
+  onLogout,
+  searchText,
+  setSearchText,
+}) {
   return (
     <div>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <TopBar currentUser={currentUser} onLogout={onLogout} />
+          <TopBar currentUser={currentUser} onLogout={onLogout} searchText={searchText} onSearchChange={setSearchText} />
         </Grid>
         <div className="main-topbar-buffer" />
 
@@ -92,7 +103,7 @@ function AppContent({ currentUser, onLoginSuccess, onLogout }) {
           <Paper className="main-grid-item">
             {/* <UserList /> */}
             {currentUser ? (
-              <UserList />
+              <UserList searchText={searchText} />
             ) : (
               <Typography sx={{ p: 2 }} variant="body2" color="text.secondary">
                 Please login to view users
@@ -119,7 +130,7 @@ function AppContent({ currentUser, onLoginSuccess, onLogout }) {
                 path="/users/:userId"
                 element={
                   <ProtectedRoute currentUser={currentUser}>
-                    <UserDetail />
+                    <UserDetail currentUser={currentUser}/>
                   </ProtectedRoute>
                 }
               />
@@ -127,7 +138,15 @@ function AppContent({ currentUser, onLoginSuccess, onLogout }) {
                 path="/photos/:userId"
                 element={
                   <ProtectedRoute currentUser={currentUser}>
-                    <UserPhotos />
+                    <UserPhotos currentUser={currentUser} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute currentUser={currentUser}>
+                    <Profile currentUser={currentUser} />
                   </ProtectedRoute>
                 }
               />
@@ -139,14 +158,14 @@ function AppContent({ currentUser, onLoginSuccess, onLogout }) {
                   </ProtectedRoute>
                 }
               />
-              {/* <Route
-                path="/users"
+              <Route
+                path="/comment"
                 element={
                   <ProtectedRoute currentUser={currentUser}>
-                    <UserList />
+                    <Test currentUser={currentUser} searchText={searchText}/>
                   </ProtectedRoute>
                 }
-              /> */}
+              />
 
               <Route
                 path="/"

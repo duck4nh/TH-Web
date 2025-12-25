@@ -148,11 +148,38 @@ router.post("/new", requireAuth, upload.single("file"), async (req, res) => {
   }
 });
 
-router.post("/likeOfPhoto/:photo_id", requireAuth, async (req, res) => {
+router.delete("/photos/:photo_id", requireAuth, async (req, res) => {
+  const { photo_id } = req.params;
+  const userId = req.user.userId;
+
+  if (!mongoose.Types.ObjectId.isValid(photo_id)) {
+    return res.status(400).json({ error: "Invalid photo id" });
+  }
+
+  try {
+    const photo = await Photo.findById(photo_id);
+    if (!photo) {
+      return res.status(404).json({ error: "Photo not found" });
+    }
+
+    await Photo.deleteOne({ _id: photo_id });
+
+    res.json({
+      success: true,
+      message: "Photo deleted from database",
+      photo_id,
+    });
+  } catch (err) {
+    console.error("DELETE /photos/:photo_id error:", err);
+    res.status(500).json({ error: "Failed to delete photo" });
+  }
+});
+
+router.post("/likeOfPhoto/:photo_id/like", requireAuth, async (req, res) => {
   const photoId = req.params.photo_id;
   const userId = req.user.userId;
 
-  console.log("POST /likeOfPhoto/:photo_id called");
+  console.log("POST /likeOfPhoto/:photo_id/like called");
 
   // Kiểm tra photo_id có hợp lệ không
   if (!mongoose.Types.ObjectId.isValid(photoId)) {
@@ -161,14 +188,12 @@ router.post("/likeOfPhoto/:photo_id", requireAuth, async (req, res) => {
   }
 
   try {
-    // Tìm photo
     const photo = await Photo.findById(photoId);
     if (!photo) {
       console.log("Photo not found");
       return res.status(404).json({ error: "Photo not found" });
     }
 
-    // Tạo comment mới
     const newLike = {
       user_id: new mongoose.Types.ObjectId(userId),
     };
@@ -176,14 +201,61 @@ router.post("/likeOfPhoto/:photo_id", requireAuth, async (req, res) => {
     photo.likes.push(newLike);
     await photo.save();
 
-    console.log("Comment added successfully");
+    console.log("Like successfully");
 
     // Lấy user info để trả về client
     const user = await User.findById(userId, "_id first_name last_name");
 
     // Trả về comment vừa tạo
     const response = {
-      message: "Like photo successfully",
+      message: "Like successfully",
+      user: {
+        _id: user._id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
+    };
+
+    res.status(201).json(response);
+  } catch (err) {
+    console.error("POST /commentsOfPhoto/:photo_id error:", err);
+    res.status(500).json({ error: "Failed to add comment" });
+  }
+});
+
+router.delete("/likeOfPhoto/:photo_id/like", requireAuth, async (req, res) => {
+  const photoId = req.params.photo_id;
+  const userId = req.user.userId;
+
+  console.log("DELETE /likeOfPhoto/:photo_id/like called");
+
+  // Kiểm tra photo_id có hợp lệ không
+  if (!mongoose.Types.ObjectId.isValid(photoId)) {
+    console.log("Invalid photo id");
+    return res.status(400).json({ error: "Invalid photo id" });
+  }
+
+  try {
+    const photo = await Photo.findById(photoId);
+    if (!photo) {
+      console.log("Photo not found");
+      return res.status(404).json({ error: "Photo not found" });
+    }
+
+    photo.likes = photo.likes.filter(
+      (l) => String(l.user_id) !== String(userId)
+    );
+
+    await photo.save();
+
+    console.log("Unlike successfully");
+
+    // Lấy user info để trả về client
+    const user = await User.findById(userId, "_id first_name last_name");
+
+    // Trả về comment vừa tạo
+    const response = {
+      message: "UnLike successfully",
       user: {
         _id: user._id,
         first_name: user.first_name,

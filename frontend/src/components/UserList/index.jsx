@@ -63,6 +63,11 @@ function UserList() {
   if (error) return <Typography>Error: {error}</Typography>;
   if (!users) return <Typography>Loading users...</Typography>;
 
+  // const filteredUsers = users.filter((u) => {
+  //   const fullName = `${u.first_name} ${u.last_name}`.toLowerCase();
+  //   return fullName.includes(searchText.toLowerCase());
+  // });
+
   return (
     <div>
       <Typography variant="h5" sx={{ mb: 1 }}>

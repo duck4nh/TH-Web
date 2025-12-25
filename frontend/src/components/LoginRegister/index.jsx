@@ -169,7 +169,7 @@ function LoginRegister({ onLoginSuccess }) {
 
                 <form onSubmit={handleRegister}>
                     <TextField
-                        label="Login Name *"
+                        label="Login Name"
                         fullWidth
                         margin="normal"
                         value={regLoginName}
@@ -180,7 +180,7 @@ function LoginRegister({ onLoginSuccess }) {
                         helperText="Unique username for login"
                     />
                     <TextField
-                        label="Password *"
+                        label="Password"
                         type="password"
                         fullWidth
                         margin="normal"
@@ -191,7 +191,7 @@ function LoginRegister({ onLoginSuccess }) {
                         autoComplete="new-password"
                     />
                     <TextField
-                        label="Confirm Password *"
+                        label="Confirm Password"
                         type="password"
                         fullWidth
                         margin="normal"
@@ -208,7 +208,7 @@ function LoginRegister({ onLoginSuccess }) {
                         }
                     />
                     <TextField
-                        label="First Name *"
+                        label="First Name"
                         fullWidth
                         margin="normal"
                         value={regFirstName}
@@ -218,7 +218,7 @@ function LoginRegister({ onLoginSuccess }) {
                         autoComplete="given-name"
                     />
                     <TextField
-                        label="Last Name *"
+                        label="Last Name"
                         fullWidth
                         margin="normal"
                         value={regLastName}
